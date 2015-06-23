@@ -30,7 +30,7 @@ class MockServer
   def stop
     Rack::Handler::WEBrick.shutdown
 
-    wait_for_shutdown("0.0.0.0", @port)
+    wait_for_shutdown(@host, @port)
 
     self
   end

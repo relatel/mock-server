@@ -52,7 +52,7 @@ end
 
 class MockServerStopTest < Test::Unit::TestCase
   def setup
-    @server = MockServer.new(HelloWorldSinatra, 4003)
+    @server = MockServer.new(HelloWorldSinatra, port: 4003)
     @server.start
   end
 
