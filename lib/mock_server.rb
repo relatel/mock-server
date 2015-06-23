@@ -26,6 +26,14 @@ class MockServer
     self
   end
 
+  def stop
+    Rack::Handler::WEBrick.shutdown
+
+    wait_for_shutdown("0.0.0.0", @port)
+
+    self
+  end
+
   module Methods
     def mock_server(**args, &block)
       app = Class.new(Sinatra::Base)
@@ -48,6 +56,7 @@ protected
       socket.close unless socket.nil?
       true
     rescue Errno::ECONNREFUSED,
+      Errno::ECONNRESET,
       Errno::EBADF,           # Windows
       Errno::EADDRNOTAVAIL    # Windows
       false
@@ -60,6 +69,18 @@ protected
     until listening?(host, port)
       if timeout && (Time.now > (start_time + timeout))
         raise SocketError.new("Socket did not open within #{timeout} seconds")
+      end
+    end
+
+    true
+  end
+
+  def wait_for_shutdown(host, port, timeout = 5)
+    start_time = Time.now
+
+    until !listening?(host, port)
+      if timeout && (Time.now > (start_time + timeout))
+        raise SocketError.new("Socket did not close within #{timeout} seconds")
       end
     end
 
