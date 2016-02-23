@@ -1,4 +1,5 @@
 require "sinatra/base"
+require "thin"
 require "socket"
 require "logger"
 
@@ -16,9 +17,9 @@ class MockServer
   def start
     Thread.new do
       with_quiet_logger do |logger|
-        Rack::Handler::WEBrick.run(@app, {
+        Rack::Handler::Thin.run(@app, {
           :Host => @host, :Port => @port, :Logger => logger, :AccessLog => []
-        })
+        }) {|server| @server = server}
       end
     end
 
@@ -28,7 +29,7 @@ class MockServer
   end
 
   def stop
-    Rack::Handler::WEBrick.shutdown
+    @server.stop
 
     wait_for_shutdown(@host, @port)
 
@@ -64,7 +65,7 @@ protected
     end
   end
 
-  def wait_for_service(host, port, timeout = 5)
+  def wait_for_service(host, port, timeout = 10)
     start_time = Time.now
 
     until listening?(host, port)
@@ -76,7 +77,7 @@ protected
     true
   end
 
-  def wait_for_shutdown(host, port, timeout = 5)
+  def wait_for_shutdown(host, port, timeout = 10)
     start_time = Time.now
 
     until !listening?(host, port)
