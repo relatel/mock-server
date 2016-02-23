@@ -1,7 +1,10 @@
 require "sinatra/base"
-require "thin"
+require "puma"
+require "rack/handler/puma"
 require "socket"
 require "logger"
+
+Thread.abort_on_exception = true
 
 class MockServer
   class App < Sinatra::Base
@@ -15,11 +18,11 @@ class MockServer
   end
 
   def start
-    Thread.new do
+    @thread = Thread.new do
       with_quiet_logger do |logger|
-        Rack::Handler::Thin.run(@app, {
+        Rack::Handler::Puma.run(@app, {
           :Host => @host, :Port => @port, :Logger => logger, :AccessLog => []
-        })
+        }) {|server| @server = server}
       end
     end
 
@@ -29,7 +32,7 @@ class MockServer
   end
 
   def stop
-    EventMachine.stop
+    @server.stop
 
     wait_for_shutdown(@host, @port)
 
