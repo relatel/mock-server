@@ -19,7 +19,7 @@ class MockServer
       with_quiet_logger do |logger|
         Rack::Handler::Thin.run(@app, {
           :Host => @host, :Port => @port, :Logger => logger, :AccessLog => []
-        }) {|server| @server = server}
+        })
       end
     end
 
@@ -29,7 +29,7 @@ class MockServer
   end
 
   def stop
-    @server.stop
+    EventMachine.stop
 
     wait_for_shutdown(@host, @port)
 
