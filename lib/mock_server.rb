@@ -19,11 +19,9 @@ class MockServer
 
   def start
     @thread = Thread.new do
-      with_quiet_logger do |logger|
-        Rack::Handler::Puma.run(@app, {
-          :Host => @host, :Port => @port, :Logger => logger, :AccessLog => []
-        }) {|server| @server = server}
-      end
+      Rack::Handler::Puma.run(@app, {
+        :Host => @host, :Port => @port, :Silent => true, :AccessLog => []
+      }) {|server| @server = server}
     end
 
     wait_for_service(@host, @port)
@@ -48,13 +46,6 @@ class MockServer
   end
 
 protected
-  def with_quiet_logger
-    io = File.open("/dev/null", "w")
-    yield(::Logger.new(io))
-  ensure
-    io.close
-  end
-
   def listening?(host, port)
     begin
       socket = TCPSocket.new(host, port)
